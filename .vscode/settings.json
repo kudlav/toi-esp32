@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.ipp": "c",
+        "random": "c",
+        "*.tcc": "c"
+    },
+    "cmake.configureOnOpen": true
+}
