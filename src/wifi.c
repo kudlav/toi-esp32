@@ -1,40 +1,6 @@
-#include <string.h>
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/event_groups.h"
-#include "esp_system.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_log.h"
-#include "nvs_flash.h"
-
-#include "lwip/err.h"
-#include "lwip/sys.h"
+#include "wifi.h"
 
 /* https://github.com/espressif/esp-idf/blob/master/examples/wifi/getting_started/station/main/station_example_main.c */
-
-
-/* The examples use WiFi configuration that you can set via project 
-   configuration menu
-   If you'd rather not, just change the below entries to strings with
-   the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
-*/
-#define EXAMPLE_ESP_WIFI_SSID "bubble"     // SSID
-#define EXAMPLE_ESP_WIFI_PASS "000123452"  // HESLO
-#define EXAMPLE_ESP_MAXIMUM_RETRY  10
-
-/* FreeRTOS event group to signal when we are connected*/
-static EventGroupHandle_t s_wifi_event_group;
-
-/* The event group allows multiple bits for each event, but we only care about two events:
- * - we are connected to the AP with an IP
- * - we failed to connect after the maximum amount of retries */
-#define WIFI_CONNECTED_BIT BIT0
-#define WIFI_FAIL_BIT      BIT1
-
-static const char *TAG = "wifi station";
-
-static int s_retry_num = 0;
 
 static void event_handler(void* arg, esp_event_base_t event_base,
                                 int32_t event_id, void* event_data)
@@ -131,4 +97,68 @@ void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
     ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
     vEventGroupDelete(s_wifi_event_group);
+}
+
+bool send_data() {
+	const char TAG[] = "send_data";
+
+	/* DNS lookup for host address */
+	struct hostent *server = gethostbyname(host);
+	if (server == NULL) {
+		ESP_LOGE(TAG, "Unable to find server: %s", host);
+		return false;
+	}
+
+	int addr_family = 0;
+	int ip_protocol = 0;
+	struct sockaddr* dest_addr;
+	
+	switch (server->h_addrtype) {
+		case AF_INET: {
+			struct sockaddr_in dest_addr4;
+			dest_addr4.sin_addr.s_addr = inet_addr(server->h_addr_list[0]);
+			dest_addr4.sin_family = AF_INET;
+			dest_addr4.sin_port = htons(port);
+			addr_family = AF_INET;
+			ip_protocol = IPPROTO_IP;
+			dest_addr = (struct sockaddr *) &dest_addr4;
+			break;
+		}
+		case AF_INET6: {
+			struct sockaddr_in6 dest_addr6 = { 0 };
+			inet6_aton(server->h_addr_list[0], &dest_addr6.sin6_addr);
+			dest_addr6.sin6_family = AF_INET6;
+			dest_addr6.sin6_port = htons(port);
+			dest_addr6.sin6_scope_id = esp_netif_get_netif_impl_index(WIFI_IF_STA);
+			addr_family = AF_INET6;
+			ip_protocol = IPPROTO_IPV6;
+			dest_addr = (struct sockaddr *) &dest_addr6;
+			break;
+		}
+		default:
+			ESP_LOGE(TAG, "DNS lookup response failed: %s", host);
+			return false;
+	}
+
+	/* Create socket */
+	int client_sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
+	if (client_sock < 0) {
+		ESP_LOGE(TAG, "Unable to create socket, errno: %d", errno);
+		return false;
+	}
+	ESP_LOGI(TAG, "Socket created, sending to %s:%d", host, port);
+
+	const char payload[] = "FUU BAR";
+
+	/* Send message */
+	int err = sendto(client_sock, payload, strlen(payload), 0, dest_addr, sizeof(*dest_addr));
+	if (err < 0) {
+		ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+		close(client_sock);
+		return false;
+	}
+	ESP_LOGI(TAG, "Message sent");
+
+	return true;
+
 }
