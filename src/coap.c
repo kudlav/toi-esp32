@@ -1,3 +1,8 @@
+/* CoAP sender
+ * This code is based on Public Domain example:
+ * https://github.com/espressif/esp-idf/blob/master/examples/protocols/coap_client/main/coap_client_example_main.c
+*/
+
 #include "coap.h"
 
 #define BUFSIZE 40

@@ -2,22 +2,25 @@
 
 void app_main() {
 	ESP_ERROR_CHECK(nvs_flash_init());
-
-	xTaskCreate(&onewire_task, "onewire_task", 2048, NULL, 5, NULL);
 	
 	wifi_init_sta();
 
+	bool tempOk = (tempInit() > 0);
 	bool coapOk = coapInit();
-
-	while(coapOk) {
-        float temp;
+	float temp = getDsTemp(0);
+ESP_LOGI("main", "temp: %f", temp);
+return;
+	while(tempOk && coapOk) {
         char data[512];
 
-        xQueueReceive(queue, &temp, portMAX_DELAY);
+		// Get temperature
+		float temp = getDsTemp(0);
 
         sprintf(data, "tmpRaw=%f;tmpFilter=TODO;lux=TODO;hall=TODO;tmpDev=TODO;cpu=TODO;dev=espXKUDLA15", temp);
 
 		coapSend((unsigned char *) data);
+break;
+		vTaskDelay(5000.0 / portTICK_PERIOD_MS);
     }
 
 	coapCleanup();
