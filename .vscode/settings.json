@@ -5,7 +5,8 @@
         "*.tcc": "c",
         "main.h": "c",
         "esp_http_client.h": "c",
-        "string": "c"
+        "string": "c",
+        "coap.h": "c"
     },
     "cmake.configureOnOpen": true
 }

@@ -2,6 +2,7 @@
 #define TOI_MAIN_H
 
 #include <stdio.h>
+#include <time.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -16,6 +17,7 @@
 
 #include "wifi.h"
 #include "onewire.h"
+#include "coap.h"
 
 #define GPIO_LED_BOARD  2
 #define GPIO_LED_WHITE  13
