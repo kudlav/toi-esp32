@@ -39,25 +39,25 @@ int tempInit() {
 		++numDevices;
 		owb_search_next(owb, &search_state, &found);
 	}
-	ESP_LOGI(TAG, "Found %d device%s", numDevices, 
+	ESP_LOGI(TAG, "Found %d device%s", numDevices,
 						 numDevices == 1 ? "" : "s");
 
 	// Create DS18B20 devices on the 1-Wire bus
 	for (int i = 0; i < numDevices; ++i)
 	{
-		DS18B20_Info * ds18b20_info = ds18b20_malloc();  
+		DS18B20_Info * ds18b20_info = ds18b20_malloc();
 		// heap allocation
 		devices[i] = ds18b20_info;
 
 		if (numDevices == 1) {
 			ESP_LOGI(TAG, "Single device optimisations enabled");
-			ds18b20_init_solo(ds18b20_info, owb);          
+			ds18b20_init_solo(ds18b20_info, owb);
 			// only one device on bus
 		} else {
-			ds18b20_init(ds18b20_info, owb, device_rom_codes[i]); 
+			ds18b20_init(ds18b20_info, owb, device_rom_codes[i]);
 			// associate with bus and device
 		}
-		ds18b20_use_crc(ds18b20_info, true);           
+		ds18b20_use_crc(ds18b20_info, true);
 		// enable CRC check on all reads
 		ds18b20_set_resolution(ds18b20_info, DS18B20_RESOLUTION);
 	}
@@ -73,16 +73,16 @@ ESP_LOGI(TAG, "num devices: %d", numDevices);
 
 	// Read temperatures from all sensors sequentially
 	ESP_LOGI(TAG, "Temperature readings (degrees C):");
-	ds18b20_convert_all(owb);
-/*
+/*	ds18b20_convert_all(owb);
+
 	// In this application all devices use the same resolution,
 	// so use the first device to determine the delay
 	ds18b20_wait_for_conversion(devices[0]);
-	
+
 	float temp = 0;
 	ds18b20_read_temp(devices[deviceId], &temp);
 	ESP_LOGI(TAG, "  %d: %.3f\n", deviceId, temp);
 	return temp;
-*/	
+*/
 	return NAN;
 }
