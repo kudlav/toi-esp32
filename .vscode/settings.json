@@ -8,7 +8,8 @@
         "string": "c",
         "coap.h": "c",
         "onewire.h": "c",
-        "esp_log.h": "c"
+        "esp_log.h": "c",
+        "libcoap.h": "c"
     },
     "cmake.configureOnOpen": true
 }

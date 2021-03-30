@@ -5,12 +5,6 @@
 
 #include "coap.h"
 
-#define BUFSIZE 40
-#define COAP_URI "coap://vladimir.lan:8080"
-#define COAP_DEFAULT_TIME_SEC 2
-#define EXAMPLE_COAP_PSK_KEY "1234"
-#define EXAMPLE_COAP_PSK_IDENTITY "espXKUDLA15"
-
 const static char *TAG = "CoAP_client";
 
 /* Coap client state */
@@ -174,15 +168,16 @@ bool coapSend(unsigned char data[]) {
 		int result = coap_run_once(ctx, wait_ms > 1000 ? 1000 : wait_ms);
 		if (result >= 0) {
 			if (result >= wait_ms) {
-				ESP_LOGE(TAG, "select timeout");
 				break;
 			} else {
 				wait_ms -= result;
 			}
+		} else {
+			ESP_LOGE(TAG, "coap_run_once error");
 		}
 	}
 
-	return true; // TODO maybe timeout or error handling is incorrect
+	return true;
 }
 
 void coapCleanup() {

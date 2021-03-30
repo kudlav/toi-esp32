@@ -1,33 +1,29 @@
 #include "main.h"
 
-#include <driver/adc.h>
-#define GPIO_PHOTO    36 // IO63
-
-void lightInit() {
-	gpio_pad_select_gpio(GPIO_LED_BOARD);
-	ESP_ERROR_CHECK(gpio_set_direction(GPIO_LED_BOARD, GPIO_MODE_INPUT));
+void adc1Init() {
+	// Configure ADC1 capture width12 bit
 	adc1_config_width(ADC_WIDTH_BIT_12);
-	adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_11); // TODO check and adjust max voltage
+	// Init light sensor channel GPIO34
+	adc1_config_channel_atten(CHANNEL_LIGHT, ADC_ATTEN_DB_11);
 }
 
-void hallInit() {
-	adc1_config_width(ADC_WIDTH_BIT_12);
+int lightGet() {
+	int val = adc1_get_raw(CHANNEL_LIGHT);
+	ESP_LOGI("lightGet", "Light sensor readings (0-4095): %d", val);
+	return val;
 }
 
 int hallGet() {
-	char TAG[] = "hallGet";
-	ESP_LOGI(TAG, "Hall sensor readings (0-4095):");
-	int hall = hall_sensor_read();
-	ESP_LOGI(TAG, "  %d", hall);
-	return hall;
+	int val = hall_sensor_read();
+	ESP_LOGI("hallGet", "Hall sensor readings (0-4095): %d", val);
+	return val;
 }
 
 void app_main() {
 	ESP_ERROR_CHECK(nvs_flash_init());
 
 	wifi_init_sta();
-	lightInit();
-	hallInit();
+	adc1Init();
 
 	bool tempOk = (tempInit() > 0);
 	bool coapOk = coapInit();
@@ -37,9 +33,27 @@ void app_main() {
 
 		// Get values
 		float temp = getDsTemp(0);
+		int light = lightGet();
 		int hall = hallGet();
 
-        sprintf(data, "tmpRaw=%f;tmpFilter=TODO;lux=TODO;hall=%d;tmpDev=TODO;cpu=TODO;dev=espXKUDLA15", temp, hall);
+		// Get current UTC time
+		time_t t = time(NULL);
+		struct tm *ptm = gmtime(&t);
+
+        sprintf(
+			data,
+			"time=%d-%02d-%02d %02d:%02d:%02d;tmpRaw=%f;tmpKlm=TODO;lux=%d;hal=%d;cpu=TODO;dev=%s",
+			ptm->tm_year + 1900,
+			ptm->tm_mon,
+			ptm->tm_mday,
+			ptm->tm_hour%24,
+			ptm->tm_min,
+			ptm->tm_sec,
+			temp,
+			light,
+			hall,
+			DEVICE_NAME
+		);
 
 		ESP_LOGI("main", "Collected data to send: %s", data);
 

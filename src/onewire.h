@@ -18,7 +18,7 @@
 #define GPIO_DS18B20_0       (4)
 #define MAX_DEVICES          (8)
 #define DS18B20_RESOLUTION   (DS18B20_RESOLUTION_12_BIT)
-#define SAMPLE_PERIOD        (1000)   // milliseconds
+#define SAMPLE_PERIOD        (1000) // milliseconds
 
 int tempInit();
 float getDsTemp(int);

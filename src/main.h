@@ -18,10 +18,14 @@
 #include "wifi.h"
 #include "onewire.h"
 #include "coap.h"
-
+#include <driver/adc.h>
+/*
 #define GPIO_LED_BOARD  2
 #define GPIO_LED_WHITE  13
 #define GPIO_LED_GREEN  12
 #define GPIO_LED_RED    14
+*/
+#define CHANNEL_LIGHT ADC1_CHANNEL_6
+#define DEVICE_NAME "espXKUDLA15" // DEVICE NAME
 
 #endif

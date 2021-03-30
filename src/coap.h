@@ -27,6 +27,14 @@
 #include <lwip/netdb.h>
 #include <string.h>
 
+#include "main.h"
+
+#define BUFSIZE 40
+#define COAP_DEFAULT_TIME_SEC 4
+#define EXAMPLE_COAP_PSK_KEY "1234"
+#define EXAMPLE_COAP_PSK_IDENTITY DEVICE_NAME
+#define COAP_URI "coap://lepton.lan" // COAP SERVER
+
 bool coapInit();
 bool coapSend(unsigned char data[]);
 void coapCleanup();
