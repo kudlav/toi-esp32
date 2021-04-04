@@ -3,21 +3,36 @@
 #include "BLEAddress.h"
 #include "BLEScan.h"
 
+// the number of the LED pin
+#define ledRed 14
+#define ledGreen 12
+#define ledWhite 13
+
+// setting PWM properties
+#define freq 5000
+#define ledChannelRed 0
+#define ledChannelGreen 1
+#define ledChannelWhite 2
+#define resolution 10
 
 // UUID služby zařízení
-static BLEUUID serviceUUID("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+static BLEUUID serviceUUID("180f");
 // UUID jednotlivých vlastností daného zařízení
-static BLEUUID    charUUID("6e400002-b5a3-f393-e0a9-e50e24dcca9e");
-static BLEUUID    charUUID_RX("6e400003-b5a3-f393-e0a9-e50e24dcca9e");
+static BLEUUID    charUUID_NOTIFY("1110");
+static BLEUUID    charUUID_RED("1000");
+static BLEUUID    charUUID_GREEN("0100");
+static BLEUUID    charUUID_BLUE("0010");
 
 
-static BLEAddress* DEV_ADDR = new BLEAddress("b8:27:eb:e3:86:db"); // MAC Raspberry
+static BLEAddress* DEV_ADDR = new BLEAddress("b8:27:eb:81:47:16"); // MAC Raspberry
 
 static boolean doConnect = false;
 static boolean connected = false;
 static boolean doScan = false;
-static BLERemoteCharacteristic* pRemoteCharacteristic;
-static BLERemoteCharacteristic* pRemoteCharacteristicRX;
+static BLERemoteCharacteristic* pRemoteCharacteristic_notify;
+static BLERemoteCharacteristic* pRemoteCharacteristic_red;
+static BLERemoteCharacteristic* pRemoteCharacteristic_green;
+static BLERemoteCharacteristic* pRemoteCharacteristic_blue;
 static BLEAdvertisedDevice* myDevice;
 
 //Funkce pro reakci na notifikační zprávu
@@ -25,13 +40,29 @@ static void notifyCallback(
   BLERemoteCharacteristic* pBLERemoteCharacteristic,
   uint8_t* pData,
   size_t length,
-  bool isNotify) {
-    Serial.print("Notify callback for characteristic ");
-    Serial.print(pBLERemoteCharacteristic->getUUID().toString().c_str());
-    Serial.print(" of data length ");
-    Serial.println(length);
-    Serial.print("data: ");
-    Serial.println((char*)pData);
+  bool isNotify
+) {
+  Serial.print("Notify callback");
+/*
+  const char* notify = pRemoteCharacteristic_notify->readValue().c_str();
+  Serial.print("notify: ");
+  Serial.println(notify);
+*/
+  std::string red = pRemoteCharacteristic_red->readValue();
+  Serial.print("red: ");
+  Serial.println(red.c_str());
+  ledcWrite(ledChannelRed, atoi(red.c_str()));
+
+  std::string green = pRemoteCharacteristic_green->readValue();
+  Serial.print("green: ");
+  Serial.println(green.c_str());
+  ledcWrite(ledChannelGreen, atoi(green.c_str()));
+
+  std::string blue = pRemoteCharacteristic_blue->readValue();
+  Serial.print("blue: ");
+  Serial.println(blue.c_str());
+  ledcWrite(ledChannelWhite, atoi(blue.c_str()));
+
 }
 
 
@@ -50,7 +81,7 @@ class MyClientCallback : public BLEClientCallbacks {
 bool connectToServer() {
     Serial.print("Forming a connection to ");
     Serial.println(myDevice->getAddress().toString().c_str());
-    
+
     //Nastavení klienta pro pro komunikaci přes BLE
     BLEClient*  pClient  = BLEDevice::createClient();
     Serial.println(" - Created client");
@@ -59,7 +90,7 @@ bool connectToServer() {
     pClient->setClientCallbacks(new MyClientCallback());
 
     //Připojení se k bluetooth serveru
-    pClient->connect(myDevice); 
+    pClient->connect(myDevice);
     Serial.println(" - Connected to server");
 
     //Testování přípojení se ke službě GATT na BLE zařízení
@@ -72,39 +103,74 @@ bool connectToServer() {
     }
     Serial.println(" - Found our service");
 
-
     //Testování přípojení se ke vlastnosti GATT na BLE zařízení
-    pRemoteCharacteristic = pRemoteService->getCharacteristic(charUUID);
-    if (pRemoteCharacteristic == nullptr) {
+    pRemoteCharacteristic_notify = pRemoteService->getCharacteristic(charUUID_NOTIFY);
+    if (pRemoteCharacteristic_notify == nullptr) {
       Serial.print("Failed to find our characteristic UUID: ");
-      Serial.println(charUUID.toString().c_str());
+      Serial.println(charUUID_NOTIFY.toString().c_str());
       pClient->disconnect();
       return false;
     }
-    Serial.println(" - Found our characteristic -- transmiter");
+    Serial.println(" - Found our characteristic -- notify");
 
     //Testování přípojení se ke vlastnosti GATT na BLE zařízení
-    pRemoteCharacteristicRX = pRemoteService->getCharacteristic(charUUID_RX);
-    if (pRemoteCharacteristicRX == nullptr) {
+    pRemoteCharacteristic_blue = pRemoteService->getCharacteristic(charUUID_BLUE);
+    if (pRemoteCharacteristic_blue == nullptr) {
       Serial.print("Failed to find our characteristic UUID: ");
-      Serial.println(charUUID_RX.toString().c_str());
+      Serial.println(charUUID_BLUE.toString().c_str());
       pClient->disconnect();
       return false;
     }
-    Serial.println(" - Found our characteristic -- receiver");
+    Serial.println(" - Found our characteristic -- blue");
+
+    //Testování přípojení se ke vlastnosti GATT na BLE zařízení
+    pRemoteCharacteristic_green = pRemoteService->getCharacteristic(charUUID_GREEN);
+    if (pRemoteCharacteristic_green == nullptr) {
+      Serial.print("Failed to find our characteristic UUID: ");
+      Serial.println(charUUID_GREEN.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our characteristic -- green");
+
+    //Testování přípojení se ke vlastnosti GATT na BLE zařízení
+    pRemoteCharacteristic_red = pRemoteService->getCharacteristic(charUUID_RED);
+    if (pRemoteCharacteristic_red == nullptr) {
+      Serial.print("Failed to find our characteristic UUID: ");
+      Serial.println(charUUID_RED.toString().c_str());
+      pClient->disconnect();
+      return false;
+    }
+    Serial.println(" - Found our characteristic -- red");
 
     // Testování zda daná vlastnost má možnost čtení, případně přečtení první hodnoty
-    if(pRemoteCharacteristicRX->canRead()) {
-      std::string value = pRemoteCharacteristicRX->readValue();
-      Serial.print("The characteristic value was: ");
+    if(pRemoteCharacteristic_green->canRead()) {
+      std::string value = pRemoteCharacteristic_green->readValue();
+      Serial.print("The characteristic value green: ");
       Serial.println(value.c_str());
+      ledcWrite(ledChannelGreen, atoi(value.c_str()));
+    }
+
+    // Testování zda daná vlastnost má možnost čtení, případně přečtení první hodnoty
+    if(pRemoteCharacteristic_red->canRead()) {
+      std::string value = pRemoteCharacteristic_red->readValue();
+      Serial.print("The characteristic value red: ");
+      Serial.println(value.c_str());
+      ledcWrite(ledChannelRed, atoi(value.c_str()));
+    }
+
+    // Testování zda daná vlastnost má možnost čtení, případně přečtení první hodnoty
+    if(pRemoteCharacteristic_blue->canRead()) {
+      std::string value = pRemoteCharacteristic_blue->readValue();
+      Serial.print("The characteristic value blue: ");
+      Serial.println(value.c_str());
+      ledcWrite(ledChannelWhite, atoi(value.c_str()));
     }
 
     //Testování zda UUID má vlastnost notifikačních zpráv
     //Nastavení třídy, která bude reagovat na notifikační zprávy.
-    if(pRemoteCharacteristicRX->canNotify())
-      pRemoteCharacteristicRX->registerForNotify(notifyCallback);
-
+    if(pRemoteCharacteristic_notify->canNotify())
+      pRemoteCharacteristic_notify->registerForNotify(notifyCallback);
 
     connected = true;
     return true;
@@ -124,14 +190,14 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     if(DEV_ADDR->equals(advertisedDevice.getAddress())){
       //Možnost dohledávání zařízení podle poskytujících službách
       //if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) {
-          Serial.print("CONNECTING"); 
+          Serial.print("CONNECTING");
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
       doScan = true;
 
-    } 
-  } 
+    }
+  }
 };
 
 
@@ -140,6 +206,16 @@ void setup() {
   while (!Serial) {
     ; // vyckej
   }
+
+  // configure LED PWM functionalitites
+  ledcSetup(ledChannelRed, freq, resolution);
+  ledcSetup(ledChannelGreen, freq, resolution);
+  ledcSetup(ledChannelWhite, freq, resolution);
+
+  // attach the channel to the GPIO to be controlled
+  ledcAttachPin(ledRed, ledChannelRed);
+  ledcAttachPin(ledGreen, ledChannelGreen);
+  ledcAttachPin(ledWhite, ledChannelWhite);
 
   Serial.println("Starting Arduino BLE Client application...");
   BLEDevice::init("UZ01");
@@ -161,7 +237,6 @@ void setup() {
 }
 
 void loop() {
-  
   //Proveď připojení k BLE zařízení pokud zařízení bylo nalezeno
   if (doConnect == true) {
     if (connectToServer()) {
@@ -171,26 +246,4 @@ void loop() {
     }
     doConnect = false;
   }
-
-  String data;  
-  if (connected) {
-    //Získání řetězce zprávy
-    data = Serial.readString();
-    String newValue = "Time since boot: " + String(millis()/1000);
-    printf("%s ---- data: %s\n", newValue.c_str(), data.c_str());
-    
-    if(data == "")
-      ;
-    else{
-      //Nastavení a poslání zprávy
-      pRemoteCharacteristic->writeValue(data.c_str(), data.length());
-      printf("Sending message: %s\n", data.c_str());
-    }
-    
-    /*
-      //Možnost zeptání se na hodnotu dané vlastnosti (Vlastnost musí podporovat hodnotu READ)
-      std::string inData = pRemoteCharacteristicRX->readValue();
-      Serial.println(inData.c_str());
-    */
-  }  
 }
