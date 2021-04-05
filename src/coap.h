@@ -23,7 +23,6 @@
 #include "subscribe.h"
 #include "uri.h"
 
-#include "esp_log.h"
 #include <lwip/netdb.h>
 #include <string.h>
 

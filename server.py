@@ -16,7 +16,8 @@ def newEntry():
 		"tmpKlm" : "",
 		"lux" : "",
 		"hal" : "",
-		"cpu" : "",
+		"cpu0" : "",
+		"cpu1" : "",
 	}
 
 class RootResource(resource.Resource):

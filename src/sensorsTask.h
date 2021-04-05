@@ -12,6 +12,7 @@
 #include "ds18b20.h"
 #include <math.h>
 
+#include "main.h"
 #include "wifi.h"
 #include "coap.h"
 
@@ -21,6 +22,9 @@
 #define GPIO_DS18B20_0       (4)
 #define DS18B20_RESOLUTION   (DS18B20_RESOLUTION_12_BIT)
 
+void adc1Init();
+int lightGet();
+int hallGet();
 void sensorsTask(void *pvParameter);
 
 #endif

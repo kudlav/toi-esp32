@@ -76,9 +76,18 @@ void sensorsTask(void *pvParameter) {
 		time_t t = time(NULL);
 		struct tm *ptm = gmtime(&t);
 
+		// Get filtered temperature and CPU utilization
+		xQueueSend(toProcessingQueue, (void*) &temp, (TickType_t) 0);
+		float filteredTemp = 0.0;
+		float cpu0 = 0.0;
+		float cpu1 = 0.0;
+		xQueueReceive(toSensorsQueue, &filteredTemp, portMAX_DELAY);
+		xQueueReceive(toSensorsQueue, &cpu0, portMAX_DELAY);
+		xQueueReceive(toSensorsQueue, &cpu1, portMAX_DELAY);
+
         sprintf(
 			data,
-			"time=%d-%02d-%02d %02d:%02d:%02d;tmpRaw=%.3f;tmpKlm=TODO;lux=%d;hal=%d;cpu=TODO;dev=%s",
+			"time=%d-%02d-%02d %02d:%02d:%02d;tmpRaw=%.3f;tmpKlm=%.3f;lux=%d;hal=%d;cpu0=%.0f;cpu1=%.0f;dev=%s",
 			ptm->tm_year + 1900,
 			ptm->tm_mon,
 			ptm->tm_mday,
@@ -86,8 +95,11 @@ void sensorsTask(void *pvParameter) {
 			ptm->tm_min,
 			ptm->tm_sec,
 			temp,
+			filteredTemp,
 			light,
 			hall,
+			cpu0,
+			cpu1,
 			DEVICE_NAME
 		);
 

@@ -12,7 +12,10 @@
         "libcoap.h": "c",
         "freertos.h": "c",
         "sensorstask.h": "c",
-        "gpio.h": "c"
+        "gpio.h": "c",
+        "processingtask.h": "c",
+        "math.h": "c",
+        "idletask.h": "c"
     },
     "cmake.configureOnOpen": true
 }
