@@ -9,7 +9,10 @@
         "coap.h": "c",
         "onewire.h": "c",
         "esp_log.h": "c",
-        "libcoap.h": "c"
+        "libcoap.h": "c",
+        "freertos.h": "c",
+        "sensorstask.h": "c",
+        "gpio.h": "c"
     },
     "cmake.configureOnOpen": true
 }

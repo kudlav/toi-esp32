@@ -27,7 +27,7 @@
 #include <lwip/netdb.h>
 #include <string.h>
 
-#include "main.h"
+#include "sensorsTask.h"
 
 #define BUFSIZE 40
 #define COAP_DEFAULT_TIME_SEC 4
