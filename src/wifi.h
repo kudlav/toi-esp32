@@ -21,8 +21,8 @@
 	If you'd rather not, just change the below entries to strings with
 	the config you want - ie #define EXAMPLE_WIFI_SSID "mywifissid"
 */
-#define EXAMPLE_ESP_WIFI_SSID "bubble"     // SSID
-#define EXAMPLE_ESP_WIFI_PASS "000123452"  // PASSWORD
+#define EXAMPLE_ESP_WIFI_SSID "wifiname"     // SSID
+#define EXAMPLE_ESP_WIFI_PASS "123456789"  // PASSWORD
 #define EXAMPLE_ESP_MAXIMUM_RETRY  10
 
 /* The event group allows multiple bits for each event, but we only care about two events:
